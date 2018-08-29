@@ -1,16 +1,11 @@
-extern crate futures;
-extern crate tokio;
-
-extern crate tokio_ping;
-
-use futures::{Future, Stream};
+use std::process::Command;
 
 fn usage() {
         println!("rsxping <ipaddress>")
 }
 
 fn main() {
-    let addr = std::env::args().nth(1) {
+    let addr = match std::env::args().nth(1) {
         Some(addr) => addr,
         None => {
             usage();
@@ -18,19 +13,6 @@ fn main() {
         }
     };
 
-    let pinger = tokio_ping::Pinger::new();
-    let stream = pinger.and_then(move |pinger| Ok(pinger.chain(addr).stream()));
-    let future = stream.and_then(|stream| {
-        stream.take(3).for_each(|mb_time| {
-            match mb_time {
-                Some(time) => println!("time={}", time),
-                None => println!("timeout"),
-            }
-            Ok(())
-        })
-    });
-
-    tokio::run(future.map_err(|err| {
-        eprintln!("Error: {}", err)
-    }))
+    let ping =  Command::new("ping").arg("-c 1").arg(&addr).output().expect("failed to execute process");
+    println!("{:?}",ping)
 }
